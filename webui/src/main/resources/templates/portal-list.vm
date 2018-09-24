@@ -71,13 +71,16 @@
                 <li class="nav-item mr-1">
                     <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false">IPFS Files</a>
                 </li>
-                <li class="nav-item mr-1">
-                    <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false">Add By Content</a>
-                </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" id="pills-url-tab" data-toggle="pill" href="#pills-url" role="tab" aria-controls="pills-url" aria-selected="false">Add By URL</a>
-                </li>
+                #if ( $addr.getBalance() >= 1 )
+                    <li class="nav-item mr-1">
+                        <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false">Add By Content</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" id="pills-url-tab" data-toggle="pill" href="#pills-url" role="tab" aria-controls="pills-url" aria-selected="false">Add By URL</a>
+                    </li>
+                #end
             </ul>
             <hr>
             <div class="tab-content" id="pills-tabContent">
@@ -142,32 +145,36 @@
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
-                    <h3>Add Content</h3>
-                    <img id="add-content-loading" src="/img/black-ajax-loader.gif" alt="Adding content..." class="mx-auto d-none" />
-                    <form id="add-content">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="content-path" aria-describedby="contentHelp" placeholder="Content Path">
-                            <small id="contentHelp" class="form-text text-muted">The path for your content.</small>
-                        </div>
-                        <div class="form-group">
-                            <textarea class="form-control" id="content-content" rows="3" aria-describedby="contentContentHelp" placeholder="Content"></textarea>
-                            <small id="contentContentHelp" class="form-text text-muted">Put your content here.</small>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Add Content</button>
-                    </form>
-                </div>
+                #if ( $addr.getBalance() >= 1 )
+                    <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                        <h3>Add Content</h3>
+                        <img id="add-content-loading" src="/img/black-ajax-loader.gif" alt="Adding content..." class="mx-auto d-none" />
+                        <form action="/portal/addtxt">
+                            <div class="form-group">
+                                <input name="path" type="text" class="form-control" id="content-path" aria-describedby="contentHelp" placeholder="Content Path">
+                                <small id="contentHelp" class="form-text text-muted">The path for your content.</small>
+                            </div>
+                            <div class="form-group">
+                                <textarea name="content" class="form-control" id="content-content" rows="3" aria-describedby="contentContentHelp" placeholder="Content"></textarea>
+                                <small id="contentContentHelp" class="form-text text-muted">Put your content here.</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Content</button>
+                            <input name="addr" type="hidden" value="$addr.address">
+                        </form>
+                    </div>
 
-                <div class="tab-pane fade" id="pills-url" role="tabpanel" aria-labelledby="pills-url-tab">
-                    <h3>Add Content By URL</h3>
-                    <form id="add-content-url">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="content-url" aria-describedby="contentHelpURL" placeholder="Content URL">
-                            <small id="contentHelpURL" class="form-text text-muted">The URL to fetch your content from.</small>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Add Content</button>
-                    </form>
-                </div>
+                    <div class="tab-pane fade" id="pills-url" role="tabpanel" aria-labelledby="pills-url-tab">
+                        <h3>Add Content By URL</h3>
+                        <form action="/portal/addurl">
+                            <div class="form-group">
+                                <input name="path" type="text" class="form-control" id="content-url" aria-describedby="contentHelpURL" placeholder="Content URL">
+                                <small id="contentHelpURL" class="form-text text-muted">The URL to fetch your content from.</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Content</button>
+                            <input name="addr" type="hidden" value="$addr.address">
+                        </form>
+                    </div>
+                #end
             </div>
             <!-- End MAIN Content -->
 
@@ -207,9 +214,9 @@
             <div class="modal-body">
                 <ul id="address-list">
                     #if ( ! $addrs.empty )
-                        #foreach( $addr in $addrs )
-                            #if ( $addr.label != "" )
-                                <li>( $addr.label ) <a href="/portal/files?addr=$addr.address">$addr.address</a>
+                        #foreach( $addr_modal in $addrs )
+                            #if ( $addr_modal.label != "" )
+                                <li>( $addr_modal.label ) <a href="/portal/files?addr=$addr_modal.address">$addr_modal.address</a>
                             #end
                         #end
                     #end

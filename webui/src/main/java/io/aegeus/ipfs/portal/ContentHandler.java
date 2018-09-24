@@ -190,7 +190,7 @@ public class ContentHandler implements HttpHandler {
         // Address List
 
         else if (relPath.startsWith("/portal/addresses")) {
-            tmplPath = pageAddressList(context);
+            tmplPath = pageAddressList(exchange, context);
         }
 
         // Home page
@@ -360,10 +360,25 @@ public class ContentHandler implements HttpHandler {
     private String pageFileList(HttpServerExchange exchange, VelocityContext context) throws Exception {
 
         Map<String, Deque<String>> qparams = exchange.getQueryParameters();
-        String rawAddr = qparams.get("addr").getFirst();
 
-        Address addr = wallet.findAddress(rawAddr);
-        String pubKey = client.findRegistation(rawAddr);
+        // Initializing String variable with null value
+        String rawAddr = null;
+        Address addr = null;
+        String pubKey = null;
+
+        try {
+            rawAddr = qparams.get("addr").getFirst();
+        } catch(NullPointerException e) {
+            new RedirectHandler("/portal/addresses?error=No+address+found!").handleRequest(exchange);
+        }
+
+        try {
+            addr = wallet.findAddress(rawAddr);
+            pubKey = client.findRegistation(rawAddr);
+        } catch (IllegalStateException e) {
+            new RedirectHandler("/portal/addresses?error=" + e.getMessage() + "!").handleRequest(exchange);
+        }
+
         AddressDTO paddr = portalAddress(addr, pubKey != null);
         context.put("addr", paddr);
         
@@ -416,9 +431,16 @@ public class ContentHandler implements HttpHandler {
         return "templates/portal-send.vm";
     }
 
-    private String pageAddressList(VelocityContext context) throws Exception {
+    private String pageAddressList(HttpServerExchange exchange, VelocityContext context) throws Exception {
 
+        Map<String, Deque<String>> qparams = exchange.getQueryParameters();
         List<AddressDTO> addrs = new ArrayList<>();
+
+        String error = null;
+
+        try {
+            error = qparams.get("error").getFirst();
+        } catch(NullPointerException e) { }
 
         for (Address addr : getAddressWithLabel()) {
             BigDecimal balance;
@@ -435,6 +457,7 @@ public class ContentHandler implements HttpHandler {
         String envLabel = System.getenv().get(Constants.ENV_WEBUI_LABEL);
         envLabel = envLabel != null ? envLabel : "Bob";
 
+        context.put("error", error);
         context.put("envLabel", envLabel);
         context.put("addrs", addrs);
 
