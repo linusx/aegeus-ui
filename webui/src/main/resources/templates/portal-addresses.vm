@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Aegeus Portal | Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
+
+    <!-- Custom fonts for this template-->
+    <link href="/css/fontawesome-all.min.css" rel="stylesheet" type="text/css">
+
+    <!-- SB Admin -->
+    <link rel="stylesheet" href="/css/sb-admin.css" type="text/css">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css" type="text/css">
+
+</head>
+
+
+<body id="page-top">
+
+<nav class="navbar navbar-expand navbar-dark bg-dark static-top">
+    <a class="navbar-brand mr-1" href="/portal">Aegeus</a>
+    <button class="btn btn-link btn-sm text-white order-1 order-sm-0" id="sidebarToggle" href="#">
+        <i class="fas fa-bars"></i>
+    </button>
+</nav>
+
+<div id="wrapper">
+
+    <!-- Sidebar -->
+    <ul class="sidebar navbar-nav toggled">
+        <li class="nav-item">
+            <a class="nav-link" href="/portal">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item active">
+            <a class="nav-link" href="/portal/addresses">
+                <i class="fab fa-btc"></i>
+                <span>Addresses</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link show-select-address" href="#">
+                <i class="fas fa-fw fa-list"></i>
+                <span>Files</span></a>
+        </li>
+    </ul>
+
+    <div id="content-wrapper">
+
+        <div class="container-fluid">
+
+            <!-- Breadcrumbs-->
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/portal">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active">Addresses</li>
+            </ol>
+
+            <!-- MAIN Content -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table id="accounts" class="table-sm table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Account</th>
+                                    <th>Address</th>
+                                    <th>Balance</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                #if ( ! $addrs.empty )
+                                    #foreach( $addr in $addrs )
+                                        <tr>
+                                            #if ( $addr.label != "" )
+                                                <td>$addr.label</td>
+                                            #else
+                                                <td><input class="form-control form-control-sm" name="label" id="addr-label-$addr.address" type="text" value="$envLabel"></td>
+                                            #end
+
+                                            <td><a href="/portal/files?addr=$addr.address">$addr.address</a></td>
+                                            <td>$addr.balance</td>
+                                            <td>
+                                                #if ( $addr.label != "" )
+                                                    #if ( ! $addr.registered && ! $addr.watchOnly && $addr.balance > 0 )
+                                                        <button onclick="window.location.href='/portal/regaddr?addr=$addr.address';" id="assign-btn" type="button" class="btn btn-outline-primary btn-sm">register</button>
+                                                    #end
+                                                #else
+                                                    <button id="assign-btn" data-address="$addr.address" type="button" class="assign-btn btn btn-outline-primary btn-sm">assign</button>
+                                                #end
+                                            </td>
+                                            <form id="form-assign-label-$addr.address" action="/portal/assign">
+                                                <input name="addr"  type="hidden" id="assign-addr-$addr.address"  value="$addr.address">
+                                                <input name="label" type="hidden" id="assign-label-$addr.address" value="">
+                                            </form>
+                                        </tr>
+                                    #end
+                                #end
+                            </tbody>
+                        </table>
+                        <div class="form-group row mt-3">
+                            <div class="col-12">
+                                <form id="add-address" action="/portal/newaddr" class="row">
+                                    <div class="col-4">
+                                        <input name="label" class="form-control form-control-sm" type="text" placeholder="New Address Name" value="" id="new-address-name">
+                                    </div>
+                                    <div class="col-3">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">Generate Address</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-12"></div>
+            </div>
+            <!-- End MAIN Content -->
+
+        </div>
+        <!-- /.container-fluid -->
+
+        <!-- Sticky Footer -->
+        <footer class="sticky-footer">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>Copyright © 2018</span>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+    <!-- /.content-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+<!-- Scroll to Top Button-->
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+</a>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Select Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul id="address-list">
+                    #if ( ! $addrs.empty )
+                        #foreach( $addr in $addrs )
+                            #if ( $addr.label != "" )
+                                <li>( $addr.label ) <a href="/portal/files?addr=$addr.address">$addr.address</a>
+                            #end
+                        #end
+                    #end
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/jquery.js"></script>
+<script>window.jQuery || document.write('<script src="/js/jquery.js"><\/script>')</script>
+<script src="/js/popper.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/sb-admin.min.js"></script>
+
+<script type="text/javascript">
+    (function($) {
+        $(document).on('click', '.show-select-address', function(e) {
+            e.preventDefault();
+            $('#exampleModal').modal('toggle');
+        });
+
+        $(document).on('click', '.assign-btn', function(e) {
+            e.preventDefault();
+            var address = $(this).data('address'),
+                label   = $('#addr-label-' + address).val();
+
+            $('#assign-label-' + address).val( label );
+
+            $('#form-assign-label-' + address).submit();
+        });
+
+        $(document).on('submit', '#add-address', function(e) {
+            var label = $('#new-address-name').val();
+
+            if ( ! label || label === '' ) {
+                e.preventDefault();
+                $('#new-address-name').addClass('is-invalid');
+                return false;
+            }
+
+            return true;
+        });
+    })(jQuery);
+</script>
+
+</body>
+</html>

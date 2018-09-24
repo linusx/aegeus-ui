@@ -175,7 +175,7 @@ public class ContentHandler implements HttpHandler {
         
         // Page file list
         
-        else if (relPath.startsWith("/portal/plist")) {
+        else if (relPath.startsWith("/portal/files")) {
             
             tmplPath = pageFileList(exchange, context);
         } 
@@ -186,7 +186,13 @@ public class ContentHandler implements HttpHandler {
             
             tmplPath = pageSend(exchange, context);
         } 
-        
+
+        // Address List
+
+        else if (relPath.startsWith("/portal/addresses")) {
+            tmplPath = pageAddressList(context);
+        }
+
         // Home page
         
         else {
@@ -219,7 +225,7 @@ public class ContentHandler implements HttpHandler {
         Address addr = wallet.findAddress(rawAddr);
         addr.setLabels(Arrays.asList(label));
         
-        redirectHomePage(exchange);
+        redirectAddressPage(exchange);
     }
 
     private void actAddText(HttpServerExchange exchange, VelocityContext context) throws Exception {
@@ -263,7 +269,7 @@ public class ContentHandler implements HttpHandler {
         
         wallet.newAddress(label);
         
-        redirectHomePage(exchange);
+        redirectAddressPage(exchange);
     }
 
     private void actFileDel(HttpServerExchange exchange, VelocityContext context) throws Exception {
@@ -363,7 +369,22 @@ public class ContentHandler implements HttpHandler {
         
         List<SFHandle> fhandles = new ArrayList<>(client.findIPFSContent(rawAddr, 10000L));
         fhandles.addAll(client.findLocalContent(rawAddr));
-        
+
+        List<AddressDTO> addrs = new ArrayList<>();
+
+        for (Address address : getAddressWithLabel()) {
+            BigDecimal balance;
+            if (!address.getLabels().isEmpty()) {
+                String label = address.getLabels().get(0);
+                balance = wallet.getBalance(label);
+            } else {
+                balance = wallet.getBalance(address);
+            }
+            String addrPubKey = client.findRegistation(address.getAddress());
+            addrs.add(new AddressDTO(address, balance, addrPubKey != null));
+        }
+
+        context.put("addrs", addrs);
         context.put("files", fhandles);
         context.put("gatewayUrl", gatewayURI);
         
@@ -395,10 +416,10 @@ public class ContentHandler implements HttpHandler {
         return "templates/portal-send.vm";
     }
 
-    private String pageHome(VelocityContext context) throws Exception {
-        
+    private String pageAddressList(VelocityContext context) throws Exception {
+
         List<AddressDTO> addrs = new ArrayList<>();
-        
+
         for (Address addr : getAddressWithLabel()) {
             BigDecimal balance;
             if (!addr.getLabels().isEmpty()) {
@@ -410,12 +431,49 @@ public class ContentHandler implements HttpHandler {
             String pubKey = client.findRegistation(addr.getAddress());
             addrs.add(new AddressDTO(addr, balance, pubKey != null));
         }
+
+        String envLabel = System.getenv().get(Constants.ENV_WEBUI_LABEL);
+        envLabel = envLabel != null ? envLabel : "Bob";
+
+        context.put("envLabel", envLabel);
+        context.put("addrs", addrs);
+
+        return "templates/portal-addresses.vm";
+    }
+
+    private String pageHome(VelocityContext context) throws Exception {
+
+        int addrCount = 0;
+        int fileCount = 0;
+
+        List<AddressDTO> addrs = new ArrayList<>();
         
+        for (Address addr : getAddressWithLabel()) {
+            BigDecimal balance;
+            if (!addr.getLabels().isEmpty()) {
+                String label = addr.getLabels().get(0);
+                balance = wallet.getBalance(label);
+            } else {
+                balance = wallet.getBalance(addr);
+            }
+            String pubKey = client.findRegistation(addr.getAddress());
+
+            addrs.add(new AddressDTO(addr, balance, pubKey != null));
+
+            List<SFHandle> fhandles = new ArrayList<>(client.findIPFSContent(addr.getAddress(), 10000L));
+            fhandles.addAll(client.findLocalContent(addr.getAddress()));
+            fileCount = fileCount + fhandles.size();
+
+            addrCount++;
+        }
+
         String envLabel = System.getenv().get(Constants.ENV_WEBUI_LABEL);
         envLabel = envLabel != null ? envLabel : "Bob";
         
         context.put("envLabel", envLabel);
         context.put("addrs", addrs);
+        context.put("addrCount", addrCount);
+        context.put("fileCount", fileCount);
         
         return "templates/portal-home.vm";
     }
@@ -440,6 +498,10 @@ public class ContentHandler implements HttpHandler {
     private void redirectHomePage(HttpServerExchange exchange) throws Exception {
         new RedirectHandler("/portal").handleRequest(exchange);
     }
+
+    private void redirectAddressPage(HttpServerExchange exchange) throws Exception {
+            new RedirectHandler("/portal/addresses").handleRequest(exchange);
+        }
     
     private void redirectFileList(HttpServerExchange exchange, String rawAddr) throws Exception {
         RedirectHandler handler = new RedirectHandler("/portal/plist?addr=" + rawAddr);

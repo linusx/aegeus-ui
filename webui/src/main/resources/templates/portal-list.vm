@@ -1,71 +1,278 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="/css/demo.css">
+    <title>Aegeus Portal | Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom fonts for this template-->
+    <link href="/css/fontawesome-all.min.css" rel="stylesheet" type="text/css">
+
+    <!-- SB Admin -->
+    <link rel="stylesheet" href="/css/sb-admin.css">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css">
+
 </head>
 
-<body>
-<table>
-<tr>
-<td><img alt="logo" width="111" height="54" data-sticky-width="82" data-sticky-height="40" data-sticky-top="33" src="/img/logo.png"></td>
-<td valign="bottom"><a href="/portal">Home</a></td>
-<tr>
-</table>
 
-<h1>Files</h1>
+<body id="page-top">
 
-<p/>
+    <nav class="navbar navbar-expand navbar-dark bg-dark static-top">
+        <a class="navbar-brand mr-1" href="/">Aegeus</a>
+        <button class="btn btn-link btn-sm text-white order-1 order-sm-0" id="sidebarToggle" href="#">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
 
-<table>
-<tr class="gray">
-    <td style=".owner">$addr.label</td>
-    <td>$addr.address</td>
-    <td>$addr.balance</td>
-</tr>
-</table>
+<div id="wrapper">
 
-<form action="/portal/padd">
-<input type="hidden" name="addr" value="$addr.address">
-<input type="submit" value="Add Content">
-</form>
-    
-#if ( ! $files.empty )
-    
-    <h2>List of IPFS files</h2>
+        <!-- Sidebar -->
+        <ul class="sidebar navbar-nav toggled">
+            <li class="nav-item">
+                <a class="nav-link" href="/portal">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/portal/addresses">
+                    <i class="fab fa-btc"></i>
+                    <span>Addresses</span></a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="#" id="show-select-address">
+                    <i class="fas fa-fw fa-list"></i>
+                    <span>Files</span></a>
+            </li>
+        </ul>
 
-    <table>
-    #foreach( $file in $files )
-        #if ( $file.cid && $file.available )
-            <tr>
-            <form id="form-$file.cid" action="/portal/fget">
-            <input type="hidden" name="addr" value="$addr.address">
-            <input type="hidden" name="cid" value="$file.cid">
-            <td><input type="text" name="path" value="$file.path"></td>
-            <td><a href="$gatewayUrl/$file.cid" target="_blank">$file.cid</a></td>
-            <td><a href="javascript:{}" onclick="document.getElementById('form-$file.cid').submit()">get</a></td>
-            <td><a href="/portal/psend?addr=$addr.address&path=$file.path&cid=$file.cid">send</a></td>
-            </form>
-            </tr>
-        #end
-    #end
-    </table>
+    <div id="content-wrapper">
 
-    <h2>List of local files</h2>
-    
-    <table>
-    #foreach( $file in $files )
-        #if ( ! $file.cid && $file.available )
-            <tr>
-            <td>$file.path</td>
-            <td>&nbsp;</td>
-            <td><a href="/portal/fshow?addr=$addr.address&path=$file.path">show</a></td>
-            <td><a href="/portal/fdel?addr=$addr.address&path=$file.path">delete</a></td>
-            </tr>
-        #end
-    #end
-    </table>
-#end
+        <div class="container-fluid">
 
+            <!-- Breadcrumbs-->
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active">Files</li>
+            </ol>
+
+            <div class="address-label">Address: <span class="address"></span></div>
+
+            <!-- MAIN Content -->
+            <ul class="nav nav-fill nav-pills mb-3" id="pills-tab" role="tablist">
+                <li class="nav-item mr-1">
+                    <a class="nav-link active" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true">Local Files</a>
+                </li>
+                <li class="nav-item mr-1">
+                    <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false">IPFS Files</a>
+                </li>
+                <li class="nav-item mr-1">
+                    <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false">Add By Content</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" id="pills-url-tab" data-toggle="pill" href="#pills-url" role="tab" aria-controls="pills-url" aria-selected="false">Add By URL</a>
+                </li>
+            </ul>
+            <hr>
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                    <div id="local-file-list">
+                        <h3>Local Files</h3>
+                        <table id="local-files" class="table table-bordered table-sm">
+                            <thead class="thead-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            #foreach( $file in $files )
+                                #if ( ! $file.cid && $file.available )
+                                    <tr>
+                                        <td>$file.path</td>
+                                        <td>&nbsp;</td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.location.href='/portal/fshow?addr=$addr.address&path=$file.path';">show</button>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.location.href='/portal/fdel?addr=$addr.address&path=$file.path';">delete</button>
+                                        </td>
+                                    </tr>
+                                #end
+                            #end
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                    <div id="ipfs-file-list">
+                        <h3>IPFS Files</h3>
+                        <table id="ipfs-files" class="table table-bordered table-sm">
+                            <thead class="thead-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            #foreach( $file in $files )
+                                #if ( $file.cid && $file.available )
+                                <tr>
+                                    <form id="form-$file.cid" action="/portal/fget">
+                                        <input type="hidden" name="addr" value="$addr.address">
+                                        <input type="hidden" name="cid" value="$file.cid">
+                                        <td><input type="text" name="path" value="$file.path"></td>
+                                        <td><a href="$gatewayUrl/$file.cid" target="_blank">$file.cid</a></td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('form-$file.cid').submit()">get</a>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.location.href='/portal/psend?addr=$addr.address&path=$file.path&cid=$file.cid';">send</a>
+                                        </td>
+                                    </form>
+                                </tr>
+                                #end
+                            #end
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                    <h3>Add Content</h3>
+                    <img id="add-content-loading" src="/img/black-ajax-loader.gif" alt="Adding content..." class="mx-auto d-none" />
+                    <form id="add-content">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="content-path" aria-describedby="contentHelp" placeholder="Content Path">
+                            <small id="contentHelp" class="form-text text-muted">The path for your content.</small>
+                        </div>
+                        <div class="form-group">
+                            <textarea class="form-control" id="content-content" rows="3" aria-describedby="contentContentHelp" placeholder="Content"></textarea>
+                            <small id="contentContentHelp" class="form-text text-muted">Put your content here.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Content</button>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="pills-url" role="tabpanel" aria-labelledby="pills-url-tab">
+                    <h3>Add Content By URL</h3>
+                    <form id="add-content-url">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="content-url" aria-describedby="contentHelpURL" placeholder="Content URL">
+                            <small id="contentHelpURL" class="form-text text-muted">The URL to fetch your content from.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Content</button>
+                    </form>
+                </div>
+            </div>
+            <!-- End MAIN Content -->
+
+        </div>
+        <!-- /.container-fluid -->
+
+        <!-- Sticky Footer -->
+        <footer class="sticky-footer">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>Copyright © 2018</span>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+    <!-- /.content-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+<!-- Scroll to Top Button-->
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+</a>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Select Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul id="address-list">
+                    #if ( ! $addrs.empty )
+                        #foreach( $addr in $addrs )
+                            #if ( $addr.label != "" )
+                                <li>( $addr.label ) <a href="/portal/files?addr=$addr.address">$addr.address</a>
+                            #end
+                        #end
+                    #end
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/jquery.js"></script>
+<script>window.jQuery || document.write('<script src="/js/jquery.js"><\/script>')</script>
+<script src="/js/popper.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/sb-admin.min.js"></script>
+<script src="/js/jquery.form.js" type="text/javascript"></script>
+<script src="/js/jquery.Jcrop.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+    (function($) {
+        // on load of the page: switch to the currently selected tab
+        var hash = window.location.hash;
+        $('#pills-tab a[href="' + hash + '"]').tab('show');
+
+        // Read a page's GET URL variables and return them as an associative array.
+        function getUrlVars() {
+            var vars = [], hash, site_hash = window.location.hash, arr_val;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+
+                if (site_hash) {
+                    arr_val = hash[1].replace(site_hash, '');
+                } else {
+                    arr_val = hash[1];
+                }
+
+                vars.push(hash[0]);
+                vars[hash[0]] = arr_val;
+            }
+            return vars;
+        }
+
+        $(document).on('click', '#show-select-address', function(e) {
+            e.preventDefault();
+            $('#exampleModal').modal('toggle');
+        });
+
+        $(document).ready(function() {
+            var vars = getUrlVars()
+
+            $("#pills-tab > li > a").on("shown.bs.tab", function(e) {
+                var id = $(e.target).attr("href").substr(1);
+                window.location.hash = id;
+            });
+
+            $('.address').text(vars.addr).show();
+
+        });
+    })(jQuery);
+</script>
 
 </body>
 </html>
